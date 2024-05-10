@@ -7,16 +7,24 @@ pipeline {
     }
     
     stages {
+        stage('Checkout') {
+            steps {
+                echo "Checking out source code from ${GITHUB_REPOSITORY}"
+                checkout scm
+            }
+        }
+        
         stage('Build') {
             steps {
-                echo "Fetching the source code from the repo: ${GITHUB_REPOSITORY}"
                 echo "Building the code using Maven"
+                sh 'mvn clean install'
             }
         }
         
         stage('Unit and Integration Tests') {
             steps {
                 echo "Running unit tests using JUnit"
+                sh 'mvn test'
                 echo "Running integration tests using Selenium"
             }
             post {
@@ -34,6 +42,7 @@ pipeline {
         stage('Code Analysis') {
             steps {
                 echo "Analyzing the code using SonarQube"
+                sh 'mvn sonar:sonar'
             }
         }
         
@@ -78,7 +87,7 @@ pipeline {
         
         stage('Deploy to Production') {
             steps {
-                echo "Deploying the application to a production server using AWS CodeDeploy"
+                echo "Deploying the application to production using AWS CodeDeploy"
                 echo "Using AWS CodeDeploy to deploy the application to an EC2 instance"
             }
         }
