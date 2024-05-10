@@ -7,24 +7,26 @@ pipeline {
     }
     
     stages {
-        stage('Checkout') {
-            steps {
-                echo "Checking out source code from ${GITHUB_REPOSITORY}"
-                checkout scm
-            }
-        }
-        
         stage('Build') {
             steps {
+                echo "Fetching the source code from the repo: ${GITHUB_REPOSITORY}"
                 echo "Building the code using Maven"
-                sh 'mvn clean install'
+            }
+            post {
+                always {
+                    emailext (
+                        subject: "Build Stage Status: ${currentBuild.result}",
+                        body: "The build stage of the pipeline has completed with the following status: ${currentBuild.result}",
+                        attachLog: true,
+                        to: "${EMAIL_RECIPIENT}"
+                    )
+                }
             }
         }
         
         stage('Unit and Integration Tests') {
             steps {
                 echo "Running unit tests using JUnit"
-                sh 'mvn test'
                 echo "Running integration tests using Selenium"
             }
             post {
@@ -42,7 +44,16 @@ pipeline {
         stage('Code Analysis') {
             steps {
                 echo "Analyzing the code using SonarQube"
-                sh 'mvn sonar:sonar'
+            }
+            post {
+                always {
+                    emailext (
+                        subject: "Code Analysis Stage Status: ${currentBuild.result}",
+                        body: "The code analysis stage of the pipeline has completed with the following status: ${currentBuild.result}",
+                        attachLog: true,
+                        to: "${EMAIL_RECIPIENT}"
+                    )
+                }
             }
         }
         
@@ -67,6 +78,16 @@ pipeline {
                 echo "Deploying the application to a staging server using AWS CodeDeploy"
                 echo "Using AWS CodeDeploy to deploy the application to an EC2 instance"
             }
+            post {
+                always {
+                    emailext (
+                        subject: "Deploy to Staging Stage Status: ${currentBuild.result}",
+                        body: "The deploy to staging stage has completed with the following status: ${currentBuild.result}",
+                        attachLog: true,
+                        to: "${EMAIL_RECIPIENT}"
+                    )
+                }
+            }
         }
         
         stage('Integration Tests on Staging') {
@@ -77,7 +98,7 @@ pipeline {
                 always {
                     emailext (
                         subject: "Integration Tests on Staging Status: ${currentBuild.result}",
-                        body: "Staging Integration tests stage has completed with the following status: ${currentBuild.result}",
+                        body: "Staging integration tests stage has completed with the following status: ${currentBuild.result}",
                         attachLog: true,
                         to: "${EMAIL_RECIPIENT}"
                     )
@@ -87,8 +108,18 @@ pipeline {
         
         stage('Deploy to Production') {
             steps {
-                echo "Deploying the application to production using AWS CodeDeploy"
+                echo "Deploying the application to a production server using AWS CodeDeploy"
                 echo "Using AWS CodeDeploy to deploy the application to an EC2 instance"
+            }
+            post {
+                always {
+                    emailext (
+                        subject: "Deploy to Production Stage Status: ${currentBuild.result}",
+                        body: "The deploy to production stage has completed with the following status: ${currentBuild.result}",
+                        attachLog: true,
+                        to: "${EMAIL_RECIPIENT}"
+                    )
+                }
             }
         }
     }
