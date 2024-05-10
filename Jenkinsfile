@@ -1,24 +1,34 @@
 pipeline {
     agent any
-    
+
     environment {
+        // Define environment variables with specific details
         GITHUB_REPOSITORY = 'https://github.com/Williamjohn1234/jenkins6.1c.git'
         EMAIL_RECIPIENT = 'williamdawsonog@gmail.com'
     }
-    
+
     stages {
         stage('Build') {
             steps {
-                echo "Fetching the source code from the repo: ${GITHUB_REPOSITORY}"
-                echo "Building the code using Maven"
+                echo 'Building the application...'
+                script {
+                    git url: "${env.GITHUB_REPOSITORY}"
+                }
+                sh 'mvn clean package'
             }
             post {
-                always {
-                    emailext (
-                        subject: "Build Stage Status: ${currentBuild.result}",
-                        body: "The build stage of the pipeline has completed with the following status: ${currentBuild.result}",
-                        attachLog: true,
-                        to: "${EMAIL_RECIPIENT}"
+                success {
+                    emailext(
+                        subject: "Build Stage Completed Successfully",
+                        body: "The build stage completed successfully for build ${env.BUILD_NUMBER}.",
+                        to: "${env.EMAIL_RECIPIENT}"
+                    )
+                }
+                failure {
+                    emailext(
+                        subject: "Build Stage Failed",
+                        body: "The build stage failed for build ${env.BUILD_NUMBER}. Check the Jenkins console for more details.",
+                        to: "${env.EMAIL_RECIPIENT}"
                     )
                 }
             }
@@ -26,16 +36,22 @@ pipeline {
         
         stage('Unit and Integration Tests') {
             steps {
-                echo "Running unit tests using JUnit"
-                echo "Running integration tests using Selenium"
+                echo 'Running tests...'
+                sh 'mvn test'
             }
             post {
-                always {
-                    emailext (
-                        subject: "Test Stage Status: ${currentBuild.result}",
-                        body: "The test stage of the pipeline has completed with the following status: ${currentBuild.result}",
-                        attachLog: true,
-                        to: "${EMAIL_RECIPIENT}"
+                success {
+                    emailext(
+                        subject: "Testing Stage Completed Successfully",
+                        body: "The testing stage completed successfully for build ${env.BUILD_NUMBER}.",
+                        to: "${env.EMAIL_RECIPIENT}"
+                    )
+                }
+                failure {
+                    emailext(
+                        subject: "Testing Stage Failed",
+                        body: "The testing stage failed for build ${env.BUILD_NUMBER}. Check the Jenkins console for more details.",
+                        to: "${env.EMAIL_RECIPIENT}"
                     )
                 }
             }
@@ -43,15 +59,22 @@ pipeline {
         
         stage('Code Analysis') {
             steps {
-                echo "Analyzing the code using SonarQube"
+                echo 'Analyzing code...'
+                sh 'mvn sonar:sonar'
             }
             post {
-                always {
-                    emailext (
-                        subject: "Code Analysis Stage Status: ${currentBuild.result}",
-                        body: "The code analysis stage of the pipeline has completed with the following status: ${currentBuild.result}",
-                        attachLog: true,
-                        to: "${EMAIL_RECIPIENT}"
+                success {
+                    emailext(
+                        subject: "Code Analysis Stage Completed Successfully",
+                        body: "The code analysis stage completed successfully for build ${env.BUILD_NUMBER}.",
+                        to: "${env.EMAIL_RECIPIENT}"
+                    )
+                }
+                failure {
+                    emailext(
+                        subject: "Code Analysis Stage Failed",
+                        body: "The code analysis stage failed for build ${env.BUILD_NUMBER}. Check the Jenkins console for more details.",
+                        to: "${env.EMAIL_RECIPIENT}"
                     )
                 }
             }
@@ -59,15 +82,22 @@ pipeline {
         
         stage('Security Scan') {
             steps {
-                echo "Performing a security scan on the code using OWASP ZAP"
+                echo 'Performing security scan...'
+                sh 'mvn org.owasp:dependency-check-maven:check'
             }
             post {
-                always {
-                    emailext (
-                        subject: "Security Scan Stage Status: ${currentBuild.result}",
-                        body: "The security scan stage of the pipeline has completed with the following status: ${currentBuild.result}",
-                        attachLog: true,
-                        to: "${EMAIL_RECIPIENT}"
+                success {
+                    emailext(
+                        subject: "Security Scan Completed Successfully",
+                        body: "The security scan stage completed successfully for build ${env.BUILD_NUMBER}.",
+                        to: "${env.EMAIL_RECIPIENT}"
+                    )
+                }
+                failure {
+                    emailext(
+                        subject: "Security Scan Failed",
+                        body: "The security scan stage failed for build ${env.BUILD_NUMBER}. Check the Jenkins console for more details.",
+                        to: "${env.EMAIL_RECIPIENT}"
                     )
                 }
             }
@@ -75,16 +105,22 @@ pipeline {
         
         stage('Deploy to Staging') {
             steps {
-                echo "Deploying the application to a staging server using AWS CodeDeploy"
-                echo "Using AWS CodeDeploy to deploy the application to an EC2 instance"
+                echo 'Deploying to staging environment...'
+                sh './deploy-staging.sh'
             }
             post {
-                always {
-                    emailext (
-                        subject: "Deploy to Staging Stage Status: ${currentBuild.result}",
-                        body: "The deploy to staging stage has completed with the following status: ${currentBuild.result}",
-                        attachLog: true,
-                        to: "${EMAIL_RECIPIENT}"
+                success {
+                    emailext(
+                        subject: "Staging Deployment Completed Successfully",
+                        body: "The staging deployment stage completed successfully for build ${env.BUILD_NUMBER}.",
+                        to: "${env.EMAIL_RECIPIENT}"
+                    )
+                }
+                failure {
+                    emailext(
+                        subject: "Staging Deployment Failed",
+                        body: "The staging deployment stage failed for build ${env.BUILD_NUMBER}. Check the Jenkins console for more details.",
+                        to: "${env.EMAIL_RECIPIENT}"
                     )
                 }
             }
@@ -92,15 +128,22 @@ pipeline {
         
         stage('Integration Tests on Staging') {
             steps {
-                echo "Running integration tests on the staging environment using Selenium"
+                echo 'Running integration tests on staging...'
+                sh 'mvn verify'
             }
             post {
-                always {
-                    emailext (
-                        subject: "Integration Tests on Staging Status: ${currentBuild.result}",
-                        body: "Staging integration tests stage has completed with the following status: ${currentBuild.result}",
-                        attachLog: true,
-                        to: "${EMAIL_RECIPIENT}"
+                success {
+                    emailext(
+                        subject: "Integration Tests on Staging Completed Successfully",
+                        body: "Integration tests on staging completed successfully for build ${env.BUILD_NUMBER}.",
+                        to: "${env.EMAIL_RECIPIENT}"
+                    )
+                }
+                failure {
+                    emailext(
+                        subject: "Integration Tests on Staging Failed",
+                        body: "Integration tests on staging failed for build ${env.BUILD_NUMBER}. Check the Jenkins console for more details.",
+                        to: "${env.EMAIL_RECIPIENT}"
                     )
                 }
             }
@@ -108,19 +151,31 @@ pipeline {
         
         stage('Deploy to Production') {
             steps {
-                echo "Deploying the application to a production server using AWS CodeDeploy"
-                echo "Using AWS CodeDeploy to deploy the application to an EC2 instance"
+                echo 'Deploying to production...'
+                sh './deploy-production.sh'
             }
             post {
-                always {
-                    emailext (
-                        subject: "Deploy to Production Stage Status: ${currentBuild.result}",
-                        body: "The deploy to production stage has completed with the following status: ${currentBuild.result}",
-                        attachLog: true,
-                        to: "${EMAIL_RECIPIENT}"
+                success {
+                    emailext(
+                        subject: "Production Deployment Completed Successfully",
+                        body: "The production deployment stage completed successfully for build ${env.BUILD_NUMBER}.",
+                        to: "${env.EMAIL_RECIPIENT}"
+                    )
+                }
+                failure {
+                    emailext(
+                        subject: "Production Deployment Failed",
+                        body: "The production deployment stage failed for build ${env.BUILD_NUMBER}. Check the Jenkins console for more details.",
+                        to: "${env.EMAIL_RECIPIENT}"
                     )
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            echo 'Final pipeline steps completed.'
         }
     }
 }
